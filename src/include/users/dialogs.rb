@@ -779,17 +779,16 @@ module Yast
 
       # generate contents for Password Settings Dialog
       get_password_term = lambda do
-        last_change = GetString(Ops.get(user, "shadowLastChange"), "0")
+        last_change = GetInt(Ops.get(user, "shadowLastChange"), 0)
         last_change_label = ""
-        expires = GetString(Ops.get(user, "shadowExpire"), "0")
-        expires = "0" if expires == ""
+        expires = GetInt(Ops.get(user, "shadowExpire"), 0)
 
         inact = GetInt(Ops.get(user, "shadowInactive"), -1)
         max = GetInt(Ops.get(user, "shadowMax"), -1)
         min = GetInt(Ops.get(user, "shadowMin"), -1)
         warn = GetInt(Ops.get(user, "shadowWarning"), -1)
 
-        if last_change != "0"
+        if last_change != 0
           out = Convert.to_map(
             SCR.Execute(
               path(".target.bash_output"),
@@ -805,7 +804,7 @@ module Yast
           # label (date of last password change)
           last_change_label = _("Never")
         end
-        if expires != "0" && expires != "-1" && expires != ""
+        if expires != 0 && expires != -1
           out = Convert.to_map(
             SCR.Execute(
               path(".target.bash_output"),
