@@ -26,6 +26,9 @@
 #          Jiri Suchomel <jsuchome@suse.cz>
 #
 # $Id$
+
+require "open3"
+
 module Yast
   module UsersDialogsInclude
     def initialize_users_dialogs(include_target)
@@ -153,6 +156,21 @@ module Yast
       pw = Convert.to_string(UI.QueryWidget(Id(:pw1), :Value))
       UI.CloseDialog
       ret == :ok ? pw : nil
+    end
+
+    # @param count [Integer] number of days after 1970-01-01
+    # @param date_format [String] strftime format like "%x" (localized date)
+    # @return [String]
+    def format_days_after_epoch(count, date_format)
+      cmd_args = [
+        "date","--date=1970-01-01 00:00:01 #{count} days",
+        "+#{date_format}"
+      ]
+      Open3.popen2(*cmd_args) do |_stdin, stdout, _wait_thr|
+        # Read the output from the system date command and trim
+        # the newline character
+        stdout.read.chomp
+      end
     end
 
     # Dialog for adding or editing a user.
@@ -789,39 +807,14 @@ module Yast
         warn = GetInt(Ops.get(user, "shadowWarning"), -1)
 
         if last_change != 0
-          out = Convert.to_map(
-            SCR.Execute(
-              path(".target.bash_output"),
-              Builtins.sformat(
-                "date --date='1970-01-01 00:00:01 %1 days' +\"%%x\"",
-                last_change
-              )
-            )
-          )
           # label (date of last password change)
-          last_change_label = Ops.get_locale(out, "stdout", _("Unknown"))
+          last_change_label = format_days_after_epoch(last_change, "%x")
         else
           # label (date of last password change)
           last_change_label = _("Never")
         end
         if expires != 0 && expires != -1
-          out = Convert.to_map(
-            SCR.Execute(
-              path(".target.bash_output"),
-              Ops.add(
-                Builtins.sformat(
-                  "date --date='1970-01-01 00:00:01 %1 days' ",
-                  expires
-                ),
-                "+\"%Y-%m-%d\""
-              )
-            )
-          )
-          # remove \n from the end
-          exp_date = Builtins.deletechars(
-            Ops.get_string(out, "stdout", ""),
-            "\n"
-          )
+          exp_date = format_days_after_epoch(expires, "%Y-%m-%d")
         end
         HBox(
           HSpacing(3),
