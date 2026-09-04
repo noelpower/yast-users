@@ -206,10 +206,7 @@ module Yast
     # @param date_format [String] strftime format like "%x" (localized date)
     # @return [String]
     def format_days_after_epoch(count, date_format)
-      Yast::Execute.locally("/usr/bin/date", "--date=1970-01-01 00:00:01 #{count} days", "+#{date_format}", stdout: :capture).chomp
-      rescue Cheetah::ExecutionFailed => e
-        log.info(e.message)
-        ""
+      Yast::Execute.locally!.stdout("/usr/bin/date", "--date=1970-01-01 00:00:01 #{count} days", "+#{date_format}").chomp
     end
 
     # generate contents for Password Settings Dialog
